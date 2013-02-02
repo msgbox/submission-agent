@@ -7,23 +7,15 @@
 // encode a message into a protocol buffer before pushing it to
 // the queue.
 
-package main
+package submission_agent
 
 import (
-	"github.com/msgbox/submission-agent/submission-agent"
+	"github.com/msgbox/submission-agent/submission_agent"
 	"net"
 )
 
-var Addr string
-
-func main() {
-
-	addr := Addr
-	if addr == "" {
-		addr = ":1337"
-	}
-
-	ln, err := net.Listen("tcp", addr)
+func CreateAgent(port string) {
+	ln, err := net.Listen("tcp", port)
 	if err != nil {
 		// handle error
 	}
@@ -36,12 +28,11 @@ func main() {
 			continue
 		}
 
-		sess, err := submission_agent.Session(rw)
+		sess, err := agent.Session(rw)
 		if err != nil {
 			continue
 		}
 
 		go sess.Read()
 	}
-
 }

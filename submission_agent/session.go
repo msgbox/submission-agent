@@ -1,4 +1,4 @@
-package submission_agent
+package agent
 
 import (
 	"bufio"
@@ -46,8 +46,6 @@ func (s *session) handleMessage(body []byte) {
 		// Handle Error
 	}
 	defer conn.Close()
-
-	log.Printf("Message: %s", body)
 
 	err := Send(body, conn)
 	if err != nil {

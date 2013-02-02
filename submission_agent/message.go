@@ -1,4 +1,4 @@
-package submission_agent
+package agent
 
 import (
 	"code.google.com/p/goprotobuf/proto"
