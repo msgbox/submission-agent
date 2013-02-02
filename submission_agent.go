@@ -10,29 +10,58 @@
 package submission_agent
 
 import (
+	"fmt"
+	"github.com/msgbox/queue"
 	"github.com/msgbox/submission-agent/submission_agent"
+	"github.com/streadway/amqp"
+	"io/ioutil"
 	"net"
 )
 
+type session struct {
+	queue *amqp.Connection
+}
+
 func CreateAgent(port string) {
-	ln, err := net.Listen("tcp", port)
-	if err != nil {
-		// handle error
+
+	tcpAddr, err := net.ResolveTCPAddr("tcp4", port)
+	checkError(err)
+
+	listener, err := net.ListenTCP("tcp", tcpAddr)
+	checkError(err)
+
+	// Create an AMQP Connection
+	queueConn, err := queue.Connect()
+	checkError(err)
+	defer queueConn.Close()
+
+	s := &session{
+		queue: queueConn,
 	}
-	defer ln.Close()
 
 	for {
-		rw, err := ln.Accept()
-		if err != nil {
-			// handle error
-			continue
-		}
-
-		sess, err := agent.Session(rw)
+		conn, err := listener.Accept()
 		if err != nil {
 			continue
 		}
 
-		go sess.Read()
+		go handleMessage(conn, s)
+	}
+}
+
+func handleMessage(conn net.Conn, s *session) {
+	// close connection on exit
+	defer conn.Close()
+
+	result, err := ioutil.ReadAll(conn)
+	checkError(err)
+
+	err = agent.Send(result, s.queue)
+	checkError(err)
+}
+
+func checkError(err error) {
+	if err != nil {
+		fmt.Printf("Fatal error: %s", err.Error())
 	}
 }
